@@ -305,45 +305,117 @@
   }
 
   /* ---------------- Contact form validation (frontend-only) ---------------- */
-  const contactForm = document.getElementById('contactForm');
-  if(contactForm){
-    const fields = {
-      'cf-name':   v => v.trim().length >= 2 ? '' : 'Please enter your name.',
-      'cf-email':  v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Please enter a valid email.',
-      'cf-subject':v => v.trim().length >= 3 ? '' : 'Please add a short subject.',
-      'cf-message':v => v.trim().length >= 10 ? '' : 'Message should be at least 10 characters.'
-    };
+   const contactForm = document.getElementById('contactForm');
+   if(contactForm){
+     const fields = {
+       'cf-name':   v => v.trim().length >= 2 ? '' : 'Please enter your name.',
+       'cf-email':  v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Please enter a valid email.',
+       'cf-subject':v => v.trim().length >= 3 ? '' : 'Please add a short subject.',
+       'cf-message':v => v.trim().length >= 10 ? '' : 'Message should be at least 10 characters.'
+     };
 
-    function validateField(id){
-      const el = document.getElementById(id);
-      const errEl = contactForm.querySelector(`[data-error-for="${id}"]`);
-      const msg = fields[id] ? fields[id](el.value) : '';
-      el.classList.toggle('invalid', !!msg);
-      if(errEl) errEl.textContent = msg;
-      return !msg;
+     function validateField(id){
+       const el = document.getElementById(id);
+       const errEl = contactForm.querySelector(`[data-error-for="${id}"]`);
+       const msg = fields[id] ? fields[id](el.value) : '';
+       el.classList.toggle('invalid', !!msg);
+       if(errEl) errEl.textContent = msg;
+     return !msg;
+   }
+
+   Object.keys(fields).forEach(id => {
+     const el = document.getElementById(id);
+     el.addEventListener('blur', () => validateField(id));
+     el.addEventListener('input', () => { if(el.classList.contains('invalid')) validateField(id); });
+   });
+
+   contactForm.addEventListener('submit', (e) => {
+     e.preventDefault();
+     const results = Object.keys(fields).map(validateField);
+     const allValid = results.every(Boolean);
+     if(!allValid){
+       showToast('Please check the form', 'A few fields need your attention.', 'fa-triangle-exclamation');
+       return;
     }
+     const name = document.getElementById('cf-name').value.trim();
+     showToast('Message sent!', `Thanks ${name.split(' ')[0]}, I'll get back to you shortly.`);
+     contactForm.reset();
+     Object.keys(fields).forEach(id => document.getElementById(id).classList.remove('invalid'));
+   });
+ }
 
-    Object.keys(fields).forEach(id => {
-      const el = document.getElementById(id);
-      el.addEventListener('blur', () => validateField(id));
-      el.addEventListener('input', () => { if(el.classList.contains('invalid')) validateField(id); });
-    });
 
-    contactForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const results = Object.keys(fields).map(validateField);
-      const allValid = results.every(Boolean);
-      if(!allValid){
-        showToast('Please check the form', 'A few fields need your attention.', 'fa-triangle-exclamation');
-        return;
-      }
-      const name = document.getElementById('cf-name').value.trim();
-      showToast('Message sent!', `Thanks ${name.split(' ')[0]}, I'll get back to you shortly.`);
-      contactForm.reset();
-      Object.keys(fields).forEach(id => document.getElementById(id).classList.remove('invalid'));
-    });
-  }
+const form = document.getElementById('form');
+const submitBtn = form.querySelector('button[type="submit"]');
 
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    formData.append("access_key", "4e561d78-78a3-4285-af25-221dffe7f64a");
+
+    const originalText = submitBtn.textContent;
+
+    submitBtn.textContent = "Sending...";
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Success! Your message has been sent.");
+            form.reset();
+        } else {
+            alert("Error: " + data.message);
+        }
+
+    } catch (error) {
+        alert("Something went wrong. Please try again.");
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+ 
   /* ---------------- Download resume placeholder ---------------- */
   const downloadResume = document.getElementById('downloadResume');
   if(downloadResume){
